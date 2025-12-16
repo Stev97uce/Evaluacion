@@ -181,8 +181,8 @@
     </div>
 
     <script>
-        // Configuration - Will be replaced by environment variable in production
-        const API_URL = window.BACKEND_URL || 'http://localhost:3000';
+        // Configuration - Use relative URLs to work through Nginx reverse proxy
+        const API_URL = '';
 
         // Elements
         const counterElement = document.getElementById('counter');

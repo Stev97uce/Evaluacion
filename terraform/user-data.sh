@@ -55,17 +55,17 @@ sudo chown ec2-user:ec2-user /home/ec2-user/docker-compose.yml
 
 # Pull images and start containers
 cd /home/ec2-user
-sudo docker-compose pull
-sudo docker-compose up -d
+sudo /usr/local/bin/docker-compose pull
+sudo /usr/local/bin/docker-compose up -d
 
 # Create a cron job to check and restart containers if needed
 cat > /home/ec2-user/check_containers.sh <<'EOF'
 #!/bin/bash
 cd /home/ec2-user
-if ! sudo docker-compose ps | grep -q "Up"; then
-    sudo docker-compose down
-    sudo docker-compose pull
-    sudo docker-compose up -d
+if ! sudo /usr/local/bin/docker-compose ps | grep -q "Up"; then
+    sudo /usr/local/bin/docker-compose down
+    sudo /usr/local/bin/docker-compose pull
+    sudo /usr/local/bin/docker-compose up -d
 fi
 EOF
 

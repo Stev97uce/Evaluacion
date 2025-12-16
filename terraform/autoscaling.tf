@@ -27,9 +27,10 @@ resource "aws_launch_template" "main" {
     dockerhub_username = var.dockerhub_username
   }))
 
-  iam_instance_profile {
-    name = aws_iam_instance_profile.ec2_profile.name
-  }
+  # IAM Instance Profile removed for institutional AWS accounts
+  # iam_instance_profile {
+  #   name = aws_iam_instance_profile.ec2_profile.name
+  # }
 
   monitoring {
     enabled = true
