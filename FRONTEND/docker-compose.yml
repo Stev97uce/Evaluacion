@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: .
+    image: stevxd97/visitor-counter-frontend:latest
+    container_name: visitor-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - visitor-network
+
+  backend:
+    image: stevxd97/visitor-counter-backend:latest
+    container_name: visitor-backend
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - visitor-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  visitor-network:
+    driver: bridge

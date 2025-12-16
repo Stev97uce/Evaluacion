@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contador de Visitas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .counter-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .counter-label {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .counter-number {
+            font-size: 4em;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 25px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-increment {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-increment:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-reset {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status.loading {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .footer {
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .api-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .api-status.online {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .api-status.offline {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Contador de Visitas</h1>
+        <p class="subtitle">Aplicación Full Stack con Docker & AWS</p>
+        
+        <div class="counter-display">
+            <div class="counter-label">Total de Visitas</div>
+            <div class="counter-number" id="counter">0</div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn-increment" onclick="incrementVisitor()">
+                ➕ Incrementar
+            </button>
+            <button class="btn-reset" onclick="resetCounter()">
+                🔄 Reiniciar
+            </button>
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <div class="footer">
+            <span class="api-status" id="apiStatus"></span>
+            <span id="apiStatusText">Conectando al backend...</span>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Will be replaced by environment variable in production
+        const API_URL = window.BACKEND_URL || 'http://localhost:3000';
+
+        // Elements
+        const counterElement = document.getElementById('counter');
+        const statusElement = document.getElementById('status');
+        const apiStatusElement = document.getElementById('apiStatus');
+        const apiStatusTextElement = document.getElementById('apiStatusText');
+
+        // Show status message
+        function showStatus(message, type) {
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+            statusElement.style.display = 'block';
+            
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 3000);
+        }
+
+        // Update API status indicator
+        function updateApiStatus(isOnline) {
+            if (isOnline) {
+                apiStatusElement.className = 'api-status online';
+                apiStatusTextElement.textContent = 'Backend conectado';
+            } else {
+                apiStatusElement.className = 'api-status offline';
+                apiStatusTextElement.textContent = 'Backend desconectado';
+            }
+        }
+
+        // Fetch current count
+        async function fetchCount() {
+            try {
+                const response = await fetch(`${API_URL}/api/visitors`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                counterElement.textContent = data.count;
+                updateApiStatus(true);
+            } catch (error) {
+                console.error('Error fetching count:', error);
+                updateApiStatus(false);
+                showStatus('Error al conectar con el backend', 'error');
+            }
+        }
+
+        // Increment visitor count
+        async function incrementVisitor() {
+            try {
+                showStatus('Incrementando...', 'loading');
+                const response = await fetch(`${API_URL}/api/visitors/increment`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                counterElement.textContent = data.count;
+                showStatus('¡Visita registrada!', 'success');
+                updateApiStatus(true);
+            } catch (error) {
+                console.error('Error incrementing:', error);
+                updateApiStatus(false);
+                showStatus('Error al incrementar el contador', 'error');
+            }
+        }
+
+        // Reset counter
+        async function resetCounter() {
+            if (!confirm('¿Estás seguro de reiniciar el contador?')) {
+                return;
+            }
+
+            try {
+                showStatus('Reiniciando...', 'loading');
+                const response = await fetch(`${API_URL}/api/visitors/reset`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                counterElement.textContent = data.count;
+                showStatus('Contador reiniciado', 'success');
+                updateApiStatus(true);
+            } catch (error) {
+                console.error('Error resetting:', error);
+                updateApiStatus(false);
+                showStatus('Error al reiniciar el contador', 'error');
+            }
+        }
+
+        // Check backend health
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                if (response.ok) {
+                    updateApiStatus(true);
+                    return true;
+                }
+            } catch (error) {
+                console.error('Health check failed:', error);
+            }
+            updateApiStatus(false);
+            return false;
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            fetchCount();
+            // Check health every 30 seconds
+            setInterval(checkHealth, 30000);
+        });
+    </script>
+</body>
+</html>
